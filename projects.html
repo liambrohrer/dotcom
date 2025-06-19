@@ -6,14 +6,64 @@
 <link rel="stylesheet" href="">
  
 <style>
- body {
-  background-color: lightblue;
-}
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-h1 {
-  color: navy;
-  margin-left: 20px;
-}
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #e0f7fa;
+      color: #333;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background-color: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #006064;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    h3 {
+      color: #00796b;
+      margin-bottom: 20px;
+    }
+
+    a {
+      display: inline-block;
+      text-decoration: none;
+      color: #0288d1;
+      font-weight: bold;
+      transition: color 0.2s;
+    }
+
+    a:hover {
+      color: #01579b;
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      h3 {
+        font-size: 1.1rem;
+      }
+    }
 </style>
  
 <script src=""></script>
