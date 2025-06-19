@@ -1,0 +1,18 @@
+_redirects
+
+# Redirects for inbound queries
+/                   http://liamblackrohrer.com/projects.html    301!
+
+/home                   https://brandonrohrer.com/blog.html    301!
+/school                   https://brandonrohrer.com/blog.html    301!
+/i                   https://brandonrohrer.com/blog.html    301!
+/ind                   https://brandonrohrer.com/blog.html    301!
+/index                   https://brandonrohrer.com/blog.html    301!
+/library                   https://brandonrohrer.com/blog.html    301!
+/reference                   https://brandonrohrer.com/blog.html    301!
+/posts                   https://brandonrohrer.com/blog.html    301!
+/404.html                   https://brandonrohrer.com/blog.html    301!
+
+/drugs          https://docs.google.com/document/d/18NPpsxH9Z-x68KcrGzb7P3R1ucoNHP-95MKcAIy_Tsc/edit 301!
+
+/rickroll            https://vimeo.com/685995963  301!
