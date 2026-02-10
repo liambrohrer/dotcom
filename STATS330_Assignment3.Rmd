@@ -1,0 +1,243 @@
+---
+title: "STATS 330 Assignment 3"
+author: "Liam Rohrer, lroh486, 973023817"
+date: "2025-09-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(haven)
+library(tidyverse)
+library(ggplot2)
+library(s20x)
+library(interactions)
+library(statmod)
+library(mgcv)
+library(MuMIn)
+```
+
+```{css, echo = FALSE}
+body {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.6;
+  color: #2c3e50;
+  background-color: #f0f4f8;
+  padding: 40px;
+}
+
+.main-container {
+  background: #ffffff;
+  max-width: 850px;
+  margin: auto;
+  padding: 30px 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+h1, h2, h3, h4 {
+  font-weight: 600;
+  color: #006d77;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+h1 {
+  border-bottom: 3px solid #83c5be;
+  padding-bottom: 0.3em;
+}
+
+pre {
+  background: #f0f7f7;
+  border-left: 4px solid #006d77;
+  padding: 10px;
+  overflow-x: auto;
+}
+
+code {
+  font-family: "Fira Code", "Courier New", monospace;
+  font-size: 0.9em;
+  background: #edf6f9;
+  color: #003f3f;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  width: 100%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+}
+
+th {
+  background-color: #006d77;
+  color: white;
+  text-align: left;
+}
+
+img {
+  display: block;
+  margin: 1em auto;
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+hr {
+  border: none;
+  border-top: 2px dashed #83c5be;
+  margin: 2em 0;
+}
+
+```
+
+```{r}
+lobData <- read.csv("lobster.csv")
+```
+
+## Question 1
+
+```{r}
+lobGrouped <- lobData %>%
+  group_by(size) %>%
+  summarise(
+    y = sum(survived),
+    n = n(),
+    p = y / n
+  ) %>%
+  arrange(size)
+
+print(lobGrouped)
+```
+
+## Question 2
+### a)
+```{r}
+plot(lobGrouped$size, lobGrouped$p,
+     xlab = "Carapace size (mm)",
+     ylab = "Proportion survived",
+     main = "Size vs Probability of survival")
+```
+
+### b)
+We see a clear upward trend in the probability of survival as carapace size increases. This trend appears approximately linear.
+
+## Question 3
+### a)
+```{r}
+lobFit <- glm(cbind(y, n - y) ~ size, data = lobGrouped, family = binomial)
+
+dev_res <- residuals(lobFit, type = "deviance")
+pear_res <- residuals(lobFit, type = "pearson")
+
+fitted_vals <- fitted(lobFit)
+
+plot(fitted_vals, dev_res,
+     xlab = "Fitted values (survival probability)",
+     ylab = "Deviance residuals",
+     main = "Deviance residuals vs Fitted values",
+     pch = 19, col = "red")
+abline(h = 0, lty = 2)
+
+plot(fitted_vals, pear_res,
+     xlab = "Fitted values (survival probability)",
+     ylab = "Pearson residuals",
+     main = "Pearson residuals vs Fitted values",
+     pch = 19, col = "blue")
+abline(h = 0, lty = 2)
+
+lobGrouped <- mutate(lobGrouped, fitted = fitted(lobFit), expectedSuccesses = round(n * fitted, 2), expectedFailures = round(n * (1 - fitted), 2))
+tibble(Expected_successes = lobGrouped$expectedSuccesses, Expected_failures = lobGrouped$expectedFailures)
+
+summary(lobFit)
+1 - pchisq(lobFit$deviance, lobFit$df.residual)
+```
+
+The deviance residual plot and pearson residual plot appear almost identical. This is because although the residuals are calculated differently, they are describing the same data. In addition, the small sample sizes combined with limited variability means that neither residual type reveals any deeper structure beyond the other, so the plots end up looking essentially the same.
+
+Our final model is:
+$$logit(𝜇_i) = \beta_0 + \beta_1×Size_i$$
+We have some groups with expected successes or failures less than five which means we have mild sparsity. The residuals appear to have approximately constant variance between -1 and 1 and a chi-square Goodness Of Fit test returns an insignificant value, telling us that we have no evidence that the residual deviance does not come from a chi-square distribution. Together this information allows us to determine the model suitable for representing the data, but it should be noted that the data is somewhat sparse.
+
+
+### b)
+We have evidence of a strong positive relationship between carapace size and probability of survival. We can say with 95% confidence that a one mm increase in carapace size results in an increase between 13.8% and 30.1% in the odds of survival.
+
+## Question 4
+### a)
+```{r}
+lobGAM <- gam(cbind(y, n - y) ~ s(size), data = lobGrouped, family = binomial)
+plot(lobGAM)
+```
+
+Here we have fitted a GAM model and found that a linear relationship is most appropriate under a binomial model.
+
+### b)
+```{r}
+authorModel <- glm(p ~ size, data = lobGrouped, family = gaussian)
+summary(authorModel)
+```
+
+### c)
+```{r}
+plot(lobGrouped$size, lobGrouped$p,
+     xlab = "Carapace size (mm)",
+     ylab = "Proportion survived",
+     main = "Size vs Probabbility of survival")
+
+new_size <- seq(min(lobGrouped$size), max(lobGrouped$size), length.out = 100)
+
+linearProb <- predict(authorModel, newdata = data.frame(size = new_size), type = "response")
+binomialProb <- predict(lobFit, newdata = data.frame(size = new_size), type = "response")
+
+lines(new_size, linearProb, col = "red", lwd = 2)
+lines(new_size, binomialProb, col = "darkgreen", lwd = 2)
+
+legend("bottomright",
+       legend = c("Author model", "My model"),
+       col = c("red", "darkgreen"),
+       lty = 2, lwd = 2)
+
+1 - pchisq(lobFit$deviance, lobFit$df.residual)
+1 - pchisq(authorModel$deviance, authorModel$df.residual)
+```
+
+From the plot alone, it is hard to determine which model fits the data better since they both fit very well. When further comparing the models, we see that the authors' model has a lower residual deviance (0.036 compared to 4.56, both on 9 degrees of freedom) and a higher chi-square Goodness Of Fit statistic (1 compared to 0.87). This suggests that the authors' model fits the data better, however, such a low residual deviance and high Goodness Of Fit could indicate that the model fits the data too well and needs to be further investigated.
+
+## Question 5
+### a)
+The residual deviance of a binomial model is closely approximated by a chi-squared distribution when the model is correct, observations are independent, and expected successes and failures are at least five for each group. This holds for about half of the groups, meaning we have some sparsity, but not necessarily enough to make the data not interpretable.
+
+### b)
+```{r}
+set.seed(486)
+runs <- 1000
+simDeviance <- numeric(runs)
+
+for (i in 1:runs) {
+  y.sim <- rbinom(n = nrow(lobGrouped), size = lobGrouped$n, prob = fitted(lobFit))
+  
+  simulatedfit <- glm(cbind(y.sim, n - y.sim) ~ size, data = lobGrouped, family = binomial)
+  
+  simDeviance[i] <- deviance(simulatedfit)
+}
+
+hist(simDeviance, breaks = 30, probability = TRUE,
+     main = "Simulated distribution of residual deviances",
+     xlab = "Residual deviance")
+
+curve(dchisq(x, df = lobFit$df.residual), 
+      col = "red", lwd = 2, add = TRUE)
+
+legend("topright", legend = c("Predicted chi-square with 9 df"),
+       col = "red", lwd = 2, lty = 1)
+
+```
+
+It does appear reasonable to compare the logistic model's residual deviance to a chi-square distribution since the histogram of simulated deviances holds closely to the predicted chi-squared distribution with the same degrees of freedom.

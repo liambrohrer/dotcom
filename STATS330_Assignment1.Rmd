@@ -1,0 +1,207 @@
+---
+title: "STATS 330 Assignment1"
+author: "Liam Rohrer, lroh486, 973023817"
+date: "2025-08-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(s20x)
+library(interactions)
+```
+
+```{css, echo = FALSE}
+h1, h2{
+text-align: center;
+font-weight: bold;
+border-bottom: 4px solid black;
+font-family: "Poppins", sans-serif;
+}
+body{
+color: black;
+background-color: #8FBC8F;
+font-family: "Poppins", sans-serif;
+padding: 20px;
+}
+```
+
+
+
+## Question 1
+
+### Part 1
+```{r}
+bikeData <- read.csv("bike_df.csv")
+
+bikeData <- mutate(bikeData, day_type2 = ifelse(day_type == "Weekday", 0, 1))
+  
+```
+
+
+
+
+### Part 2
+
+```{r}
+plot(log(bike_count) ~ as.numeric(as.Date(date)), data = bikeData,
+     main = "Bike Count by Day (2023-2024)", 
+     xlab = "Date", ylab = "Bike Count")
+
+boxplot(log(bike_count) ~ day_type, data = bikeData,
+        main = "Bike Count on Weekdays vs Saturday vs Sunday",
+        xlab = "Day Type", ylab = "Bike Count")
+
+boxplot(log(bike_count) ~ day_type2, data = bikeData,
+        main = "Bike Count on Weekdays vs Weekends",
+        xlab = "Day Type (0 = Weekday, 1 = Weekend)", ylab = "Bike Count")
+
+boxplot(log(bike_count) ~ restr_day, data = bikeData,
+        main = "Bike Count on Non-restricted vs Restricted car days",
+        xlab = "Restriction (0 = Non-restricted, 1 = Restricted)", ylab = "Bike Count")
+
+boxplot(log(bike_count) ~ sunny, data = bikeData,
+        main = "Bike Count on Cloudy vs Sunny days",
+        xlab = "Weather (0 = Cloudy, 1 = Sunny)", ylab = "Bike Count")
+
+```
+
+
+
+
+### Part 3
+
+#### Plots examining interaction between explanitory variables:
+```{r, include = FALSE}
+ggplot(bikeData, aes(x = day_type, y = log(bike_count), fill = as.factor(restr_day)))+
+  geom_boxplot()+
+  labs( title = "Bicycle Counts by Day Type and Restriction Status",
+        x = "Day Type",
+        y = "Number of Bicycles",
+        fill = "Restricted Day (0 = No, 1 = Yes")+
+  theme_minimal()
+
+ggplot(bikeData, aes(x = day_type, y = log(bike_count), fill = as.factor(sunny)))+
+  geom_boxplot()+
+  labs( title = "Bicycle Counts by Day Type and Weather",
+        x = "Restriction Day (0 = No, 1 = Yes)",
+        y = "Number of Bicycles", 
+        fill = "Sunny (0 = No, 1 = Yes") +
+  theme_minimal()
+
+ggplot(bikeData, aes(x = as.factor(restr_day), y = log(bike_count), fill = as.factor(sunny)))+
+  geom_boxplot()+
+  labs( title = "Bicycle Counts by  Restriction Status and Weather",
+        x = "Sunny (0 = No, 1 = Yes)",
+        y = "Number of Bicycles",
+        fill = "Restricted Day (0 = No, 1 = Yes") +
+  theme_minimal()
+
+```
+
+
+```{r}
+bikeGLM_inter1 <- glm(bike_count~restr_day*sunny, family = poisson, data = bikeData)
+interact_plot(bikeGLM_inter1, pred = restr_day, modx = sunny)
+
+bikeGLM_inter2 <- glm(bike_count~restr_day*day_type, family = poisson, data = bikeData)
+interact_plot(bikeGLM_inter2, pred = restr_day, modx = day_type)
+
+bikeGLM_inter3 <- glm(bike_count~sunny*day_type, family = poisson, data = bikeData)
+interact_plot(bikeGLM_inter3, pred = sunny, modx = day_type)
+```
+
+
+
+
+#### Code for initial and final models, along with final model checks and coefficient back-transformations:
+
+```{r}
+bikeData$day_type <- factor(bikeData$day_type)
+bikeData$day_type <- relevel(bikeData$day_type, ref = "Weekday")
+
+#Initial model
+bikeGLM_initial <- glm(bike_count~(as.numeric(as.Date(date))+day_type2+restr_day+sunny)^2, family = poisson, data = bikeData)
+summary(bikeGLM_initial)
+
+#ANOVA of "day_type"
+bikeGLM_day_type <- glm(bike_count~day_type, family = poisson, data = bikeData)
+anova(bikeGLM_day_type, test = "Chisq")
+
+#Final model
+bikeGLM_final <- glm(bike_count~sunny*day_type*restr_day, family = quasipoisson, data = bikeData)
+summary(bikeGLM_final)
+modelcheck(bikeGLM_final)
+
+round(exp(confint(bikeGLM_final)), 2)
+```
+I began by predicting "bike_count" using the main effects and all two-way interactions between explanatory variables, using "day_type2" instead of "day_type". I also re-leveled "day_type" to use weekdays as the baseline because I though this seemed more intuitive.
+
+I found multiple of the interaction terms to be significant (day_type2:restr_day, day_type2:sunny, as.numeric(as.Date(date)):day_type2, and as.numeric(as.Date(date)):restr_day). However, we know that restricted days are randomly chosen and sunny days will fall on random days of the week, as well as weekdays/weekends not changing their frequency based on the date, so I removed these interaction terms because they are not logical. After doing so, I found the main effect of "date" to be insignificant, and so removed this too.
+
+I then swapped "day_type2" for "day_type" and found a significant increase in the variation explained which prompted me to keep this in my final model. This was further supported by an ANOVA of "day_type" that showed a significant difference between levels.
+
+Initially, I used a poisson distribution because "bike_count" is a count variable, but switched to quasipoisson instead due to overdispersion (residual deviance of 2015 on 725 degrees of freedom). I then did a model check and found the QQ plot, histogram of residuals, and Cook's Distances to all appear reasonable.
+
+My final model equation is as follows:
+$$log(𝜇_i) = \beta_0 + \beta_1×DayType_i + \beta_2\times Restricted_i + \beta_3 \times Sunny_i$$
+We have evidence of significant main effects from "day_type", "restr_day", and "sunny" on the total count of bikes each day. Using cloudy weekdays with no car restrictions as the baseline, we estimate with 95% confidence that the baseline average is between 14.19 and 15.45 bikes per day. Compared to this, our confidence intervals show average increases of:
+
+  * Between 190% and 208% on Saturdays
+  * Between 388% and 417% on Sundays
+  * Between 195% and 208% on restricted car days
+  * Between 236% and 256% on sunny days
+
+## Question 2
+
+For both plots, my first suggestion would be to log "bikecount" as it is a count variable and clearly right skewed. Next, I would suggest to add a theme such as "theme_minimal()" to make it look a bit more professional. Finally, for the second plot, I would examine the relationships between "bikecount~restrday", and "bikecount~sunny" separately. This will provide a more clear understanding of each, and because the car restriction days are randomly chosen, we can infer that any interaction between weather and restricted days will be purely circumstantial.
+
+```{r, include = FALSE}
+ggplot(bikeData, aes(x = day_type, y = log(bike_count)))+
+  geom_boxplot(fill = "skyblue")+
+  labs( title = "Bicycle Counts by Day Type",
+        x = "Day Type",
+        y = "Number of Bicycles")+
+  theme_minimal()
+
+ggplot(bikeData, aes(x = as.factor(restr_day), y = log(bike_count)))+
+  geom_boxplot(fill = "skyblue")+
+  labs( title = "Bicycle Counts by Car Restriction",
+        x = "Restriction Day (0 = no, 1 = yes)",
+        y = "Number of Bicycles") +
+  theme_minimal()
+
+ggplot(bikeData, aes(x = as.factor(sunny), y = log(bike_count)))+
+  geom_boxplot(fill = "skyblue")+
+  labs( title = "Bicycle Counts by  Weather",
+        x = "Sunny (0 = no, 1 = yes)",
+        y = "Number of Bicycles") +
+  theme_minimal()
+
+```
+
+
+## Question 3C
+
+The first issue I notice with the model fit is the distribution. The AI is using a guassian distribution, but we are working with count data so a poisson or quasipoisson will be more appropriate. Next, I see that it is examining an interaction between "sunny" and "restrday", but we know that restricted car days are randomly chosen, so there shouldn't be any interaction between this variable and the others. I would suggest to use a poisson or quasipoisson distribution and only the main effects of each variable.
+
+
+## Question 3D
+
+The issues with this output mostly stem from the initial model setup. I believe a poisson or quasipoisson distribution would be more appropriate and the interaction between "sunny" and "restrday" should be removed. The AI has also modeled the equation using Y and instead of 𝜇 and an error term at the end. In this context it would be more appropriate to use log(𝜇) instead of Y and to not include the error term because we are fitting a line to sample count data.
+
+## Question 3E
+
+Again, most of the problems in this output stem from the initial setup. Given a normal distribution, the interpretation of coefficients would be correct. This is far from the case, however, since a normal distribution is not appropriate. Ideally, a poisson or quasipoisson distribution would be used, the coefficients would represent proportional changes in Y, and the interaction term would be removed.
+
+
+
+
+
+
+
+
+
+

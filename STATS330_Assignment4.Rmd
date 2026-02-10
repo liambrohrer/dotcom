@@ -1,0 +1,313 @@
+---
+title: "STATS 330 Assignment 4"
+author: "Liam Rohrer, lroh486, 973023817"
+date: "2025-10-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(haven)
+library(tidyverse)
+library(ggplot2)
+library(s20x)
+library(interactions)
+library(statmod)
+library(mgcv)
+library(MuMIn)
+library(pROC)
+```
+
+```{css, echo = FALSE}
+body {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.6;
+  color: #2c3e50;
+  background-color: #f0f4f8;
+  padding: 40px;
+}
+
+.main-container {
+  background: #ffffff;
+  max-width: 850px;
+  margin: auto;
+  padding: 30px 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+h1, h2, h3, h4 {
+  font-weight: 600;
+  color: #006d77;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+h1 {
+  border-bottom: 3px solid #83c5be;
+  padding-bottom: 0.3em;
+}
+
+pre {
+  background: #f0f7f7;
+  border-left: 4px solid #006d77;
+  padding: 10px;
+  overflow-x: auto;
+}
+
+code {
+  font-family: "Fira Code", "Courier New", monospace;
+  font-size: 0.9em;
+  background: #edf6f9;
+  color: #003f3f;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  width: 100%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+}
+
+th {
+  background-color: #006d77;
+  color: white;
+  text-align: left;
+}
+
+img {
+  display: block;
+  margin: 1em auto;
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+hr {
+  border: none;
+  border-top: 2px dashed #83c5be;
+  margin: 2em 0;
+}
+
+```
+
+## STATS 330 Assignment 4
+
+### Question 1
+
+```{r}
+lobData <- read.csv("lobster.csv")
+
+lobGrouped <- lobData %>%
+  group_by(size) %>%
+  summarise(
+    y = sum(survived),
+    n = n(),
+    p = y / n
+  ) %>%
+  arrange(size)
+```
+
+### a)
+
+```{r}
+lobFit <- glm(cbind(y, n - y) ~ size, data = lobGrouped, family = binomial)
+
+targetProb <- 0.9
+samples <- 1000
+sizes <- numeric(samples)
+
+set.seed(486)
+
+for (x in 1:samples) {
+  simObservations <- rbinom(n = nrow(lobGrouped), size = lobGrouped$n, prob = predict(lobFit, type = "response"))
+  
+  simModel <- glm(cbind(simObservations, lobGrouped$n - simObservations) ~ size, family = binomial, data = lobGrouped)
+  
+  simCoefs <- coef(simModel)
+  
+  sizes[x] <- (log(targetProb / (1 - targetProb)) - simCoefs[1]) / simCoefs[2]
+}
+
+parametricCI <- quantile(sizes, c(0.025, 0.975))
+parametricCI
+```
+
+### b)
+
+```{r}
+samplesNP <- 1000
+sizesNP <- numeric(samplesNP)
+
+for (y in 1:samplesNP) {
+  simSamples <- lobGrouped[sample(1:nrow(lobGrouped), replace = TRUE), ]
+  
+  simModelNP <- glm(cbind(y, n - y) ~ size, family = binomial, data = simSamples)
+  
+  simCoefsNP <- coef(simModelNP)
+  sizesNP[y] <- (log(targetProb / (1 - targetProb)) - simCoefsNP[1]) / simCoefsNP[2]
+}
+
+nonparametricCI <- quantile(sizesNP, c(0.025, 0.975))
+nonparametricCI
+```
+
+### c)
+
+From the two bootstrapped confidence intervals, we can conclude with 95% confidence that the size of the carapace where 90% of lobsters survive is between about 48cm and 55cm.
+
+The parametric and non-parametric bootstrap simulations produce very similar confidence intervals because, although their methods differ, they start with the same underlying model. The parametric bootstrap assumes the estimated coefficients to be true and generates new observations directly from the fitted model. The non-parametric bootstrap instead uses the data itself, re-sampling observations randomly to produce new sample data. The coefficients used in the parametric bootstrap are estimated from the same data that the non-parametric bootstrap randomly re-samples from. This underlying link means that the two methods are bound to converge towards similar outputs.
+
+### Question 2
+
+### a)
+
+```{r, fig.height = 5}
+writingData <- read.csv("handwriting-train.csv")
+
+variables <- setdiff(names(writingData), "gender")
+
+par(mfrow = c(2, 2))
+
+for (v in variables) {
+  boxplot(writingData[[v]] ~ writingData$gender, main = paste("Boxplot of", v, "by Gender"), xlab = "Gender", ylab = v, col = c("lightblue", "lightpink"))
+}
+```
+
+These box plots reveal a slight difference in means between males and females for chaincode1, curvature1, curvature4, and tortuosity1, and skewed distributions for chaincode4, curvature2, and curvature4. Other than this there are no clear relationships between gender and other explanatory variables.
+
+### b)
+
+```{r, fig.height = 5}
+gam.fit <- gam(I(gender == "M") ~ s(chaincode1) + s(chaincode2) + s(chaincode3) + s(chaincode4) + s(curvature1) + s(curvature2) + s(curvature3) + s(curvature4) + s(direction1) + s(tortuosity1), family = binomial, data = writingData)
+
+par(mfrow = c(2, 2))
+plot(gam.fit)
+```
+
+It appears that chaincode1 and curvature1 may call for quadratic terms in a final model, but the curves are not dramatic and chaincode1 does not display any clear trend other than being non-linear.
+
+### c) 
+
+```{r}
+fit.all <- glm(I(gender=="M") ~ (chaincode1 + chaincode2 + chaincode3 + chaincode4 + curvature1 + curvature2 + curvature3 + curvature4 + direction1 + tortuosity1)^2 + I(curvature1^2)+I(direction1^2) , family = "binomial", data = writingData)
+```
+
+
+The given model is attempting to measure the main effects of all variables, all pairwise interactions between variables, and quadratic effects for curvature1 and direction1.
+
+### d)
+
+```{r}
+betterFit <- step(fit.all, direction = "backward", trace = 0)
+
+formula(betterFit)
+```
+
+### e)
+
+```{r}
+predProbs <- predict(betterFit, type = "response")
+
+predClass <- ifelse(predProbs > 0.5, "M", "F")
+
+confMat <- table(Predicted = predClass, Actual = writingData$gender)
+confMat
+
+trueMale <- confMat["M", "M"]
+trueFemale <- confMat["F", "F"]
+falseMale <- confMat["M", "F"]
+falseFemale <- confMat["F", "M"]
+
+sensitivity <- trueMale / (trueMale + falseFemale)
+specificity <- trueFemale / (trueFemale + falseMale)
+errorRate  <- (falseMale + falseFemale) / (trueMale + falseMale + trueFemale + falseFemale)
+
+sensitivity
+specificity
+errorRate
+```
+
+The sensitivity and specificity are very similar to each other at 76.27% and 76.32% respectively. These values being similar is good because it means our model is not biased towards either group.
+We also have an error rate of 23.7% which is fairly low given the lack of clear relationships between explanatory variables and gender that we saw in the box plots in part a.
+
+### f)
+
+```{r}
+observed <- ifelse(writingData$gender == "M", 1, 0)
+roc <- roc(observed, predProbs, direction = "<")
+plot(roc)
+
+optPoint <- coords(roc, "best", best.method = "youden", ret = c("threshold", "sensitivity", "specificity"))
+optPoint
+
+optCutoff <- as.numeric(optPoint["threshold"])
+optPredClass <- ifelse(predProbs > optCutoff, "M", "F")
+
+
+optConfMat <- table(Predicted = optPredClass, Actual = writingData$gender)
+optConfMat
+
+optTrueMale <- optConfMat["M", "M"]
+optTrueFemale <- optConfMat["F", "F"]
+optFalseMale <- optConfMat["M", "F"]
+optFalseFemale <- optConfMat["F", "M"]
+
+optSensitivity <- optTrueMale / (optTrueMale + optFalseFemale)
+optSpecificity <- optTrueFemale / (optTrueFemale + optFalseMale)
+optErrorRate  <- (optFalseMale + optFalseFemale) / (optTrueMale + optFalseMale + optTrueFemale + optFalseFemale)
+
+optSensitivity
+optSpecificity
+optErrorRate
+```
+
+Our optimal values for sensitivity, specificity, and overall error are slightly adjusted from before with sensitivity increasing from 76.27% to 82.2%, specificity decreasing from 76.32% to 72.81%, and the overall error rate decreasing from 23.71% to 22.41%. 
+
+### g)
+
+```{r}
+CV.fun <- function(train, test, cutoff) {
+  model <- glm(formula(betterFit), family = binomial, data = train)
+  predictedProbs <- predict(model, newdata = test, type = "response")
+  predictedClass <- ifelse(predictedProbs > cutoff, "M", "F")
+  mean(predictedClass != test$gender)
+}
+
+k <- 10
+n <- nrow(writingData)
+folds <- sample(rep(1:k, length.out = n))
+cvErrors <- numeric(k)
+
+for (i in 1:k) {
+  trainData <- writingData[folds != i, ]
+  testData  <- writingData[folds == i, ]
+  
+  cvErrors[i] <- CV.fun(trainData, testData, optCutoff)
+}
+
+cvErrorRate <- mean(cvErrors) * 100
+cvErrorRate
+```
+
+Here we have done 10 fold cross validation and get an average error rate of about 30%. This is slightly larger than the error rate on the training data (by about 8%) which indicates some over fitting in our model. This error rate is fairly high and suggests that our model could be used as a good indication, but is not very reliable for predicting gender based on handwriting. 
+
+### h)
+
+The conclusion to not use handwriting evidence to determine gender in a criminal case is made because of the contextually high error rate of our model. Our cross validation error rate is about 30% and we wouldn't want to draw conclusions about suspects based on a prediction with such a high chance of being wrong. It seems just too important a decision to involve so much uncertainty.
+
+
+
+
+
+
+
+
+

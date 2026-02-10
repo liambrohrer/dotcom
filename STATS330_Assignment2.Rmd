@@ -1,0 +1,266 @@
+---
+title: "STATS 330 Assignment 2"
+author: "Liam Rohrer, lroh486, 973023817"
+date: "2025-08-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{css, echo = FALSE}
+h1, h2{
+text-align: center;
+font-weight: bold;
+border-bottom: 2px solid black;
+font-family: "Poppins", sans-serif;
+}
+body{
+color: black;
+background-color: #8FBC8F;
+font-family: "Poppins", sans-serif;
+padding: 20px;
+}
+```
+
+```{r, include = FALSE}
+library(haven)
+library(tidyverse)
+library(ggplot2)
+library(s20x)
+library(interactions)
+library(statmod)
+library(mgcv)
+library(MuMIn)
+options(na.action = "na.fail") 
+```
+
+# Section 1
+
+
+
+## Question 1
+
+```{r}
+abmData <- read_dta("abm.dta")
+abmData <- select(abmData, abm, age, sex, priorrx, gl, polys, wbc, bands, lymphs, month)
+abmData <- drop_na(abmData)
+```
+
+
+## Question 2
+
+```{r}
+abmData <- mutate(abmData, season = case_when(
+            month > 11 ~ "Winter",
+            month > 2 ~ "Non-winter",
+            TRUE ~ "Winter")
+            )
+
+abmData <- mutate(abmData, sex = as.factor(sex))
+```
+
+## Question 3
+
+### Part A
+
+```{r}
+plot(jitter(abmData$age), jitter(abmData$abm, factor=0.2),
+     xlab="Age", ylab="ABM (0/1)", main="Age vs ABM")
+
+plot(jitter(abmData$wbc), jitter(abmData$abm, factor=0.2),
+     xlab="White Blood Count", ylab="ABM (0/1)", main="White Blood Count vs ABM")
+
+plot(jitter(abmData$bands), jitter(abmData$abm, factor=0.2),
+     xlab="Bands", ylab="ABM (0/1)", main="Bands vs ABM")
+
+plot(jitter(abmData$gl), jitter(abmData$abm, factor=0.2),
+     xlab="Glucose", ylab="ABM (0/1)", main="Glucose vs ABM")
+
+plot(jitter(abmData$polys), jitter(abmData$abm, factor=0.2),
+     xlab="Polymorphonuclear Leukocytes", ylab="ABM (0/1)", main="Polymorphonuclear Leukocytes vs ABM")
+
+plot(jitter(abmData$lymphs[-37]), jitter(abmData$abm[-37], factor=0.2),
+     xlab="Lymphs", ylab="ABM (0/1)", main="Lymphs vs ABM")
+
+tab_sex <- table(abmData$sex, abmData$abm)
+prop_sex <- prop.table(tab_sex, 1)
+barplot(t(prop_sex[, c("1","0")]), beside=FALSE,
+        main="Proportion of ABM by Sex", ylab="Proportion", names.arg = c("Male", "Female"), legend.text = c("ABM", "No ABM"))
+
+tab_priorrx <- table(abmData$priorrx, abmData$abm)
+prop_priorrx <- prop.table(tab_priorrx, 1)
+barplot(t(prop_priorrx[, c("1","0")]), beside=FALSE,
+        main="Proportion of ABM by Priorrx", ylab="Proportion", names.arg = c("No Priorrx", "Priorrx"), legend.text = c("ABM", "No ABM"))
+
+tab_month <- table(abmData$month, abmData$abm)
+prop_month <- prop.table(tab_month, 1)
+barplot(t(prop_month[, c("1","0")]), beside=FALSE,
+        main="Proportion of ABM by Month of Admission", ylab="Proportion", legend.text = c("ABM", "No ABM"))
+
+tab_season <- table(abmData$season, abmData$abm)
+prop_season <- prop.table(tab_season, 1)
+barplot(t(prop_season[, c("1","0")]), beside=FALSE,
+        main="Proportion of ABM by Season", ylab="Proportion", legend.text = c("ABM", "No ABM"))
+
+```
+
+### Part B
+
+```{r}
+initialModel <- glm(abm ~ age + sex + priorrx + gl + polys + wbc + bands + lymphs + month + season, data = abmData, family = binomial)
+summary(initialModel)
+
+simplifiedModel <- glm(abm ~ age + priorrx + gl + polys + wbc + bands + season, data = abmData, family = binomial)
+summary(simplifiedModel)
+
+anova(initialModel, simplifiedModel, test = "Chisq")
+```
+I began by fitting a model using all explanatory terms and no interactions. This resulted in the effects of all but three parameters proving significant. I proceeded to remove the three non-significant terms and then to do an ANOVA between the complex and simplified models. The test resulted in no evidence for a difference between the two, confirming the selection of the simpler model which had significant main effects or all variables.
+
+### Part C
+
+```{r}
+simplifiedModel$deviance
+simplifiedModel$df.residual
+1 - pchisq(simplifiedModel$deviance, simplifiedModel$df.residual)
+```
+
+Here we see a residual deviance of `r round(simplifiedModel$deviance, 3)` on `r simplifiedModel$df.residual` degrees of freedom which gives us a Chi-Square Goodness Of Fit statistic very close to 1. This suggests that our model fits the data very well, and possibly too well. This is a case of under-dispersion which should be noted, but is not necessary an issue.
+
+### Part D
+```{r}
+plot(fitted(simplifiedModel), qresiduals(simplifiedModel), ylab = "Randomized Quantile Residuals")
+```
+
+Looking at the randomized quantile residuals plot, it appears that the residuals have an approximately constant variance. From this along with the Goodness Of Fit test, we can conclude that our model fits the data sufficiently well.
+
+
+## Question 4
+
+### Part A
+
+```{r}
+gamFit <- gam(abm ~ s(age) + s(gl) + s(polys) + s(wbc) + s(bands) + season + priorrx, data = abmData, family = binomial)
+plot(gamFit)
+```
+
+The GAM plots above display apparent quadratic relationships between abm~age and abm~gl. All other relationships appear linear.
+
+### Part B
+
+```{r}
+complexNonLinearModel <- glm(abm ~ age + I(age^2) + gl + I(gl^2) + polys + I(polys^2) + wbc + I(wbc^2) + bands + I(bands^2) + season + priorrx, data = abmData, family = binomial)
+summary(complexNonLinearModel)
+
+
+simpleNonLinearModel <- glm(abm ~ age + I(age^2) + gl + I(gl^2) + polys + wbc + bands + season + priorrx, data = abmData, family = binomial)
+summary(simpleNonLinearModel)
+
+
+anova(complexNonLinearModel, simpleNonLinearModel, test = "Chisq")
+anova(simplifiedModel, simpleNonLinearModel, test = "Chisq")
+```
+Above, I built a model including all quadratic terms and found that the variables appearing to follow a curve in the GAM plots were also the only ones with significant non-linear effects in the output (age and gl). I proceeded to build another model with only these quadratic terms included and then did an ANOVA to confirm no significant difference between the two.
+
+I then compared the simplified non-linear model to the one with only linear terms using an ANOVA. I found a significant difference between the two, with the non-linear model having a lower deviance with a difference of 52.38 on a difference of 2 degrees of freedom. This gives us evidence that the non-linear model is the better of the two.
+
+### Part C
+
+```{r}
+complexInteractModel <- glm(abm ~ age + I(age^2) + I(gl^2)+ (gl + polys + wbc + bands)^2 + season + priorrx, data = abmData, family = binomial)
+
+all.fits <- dredge(complexInteractModel)
+
+topInteractionModel <- get.models(all.fits, 1)[[1]]
+summary(topInteractionModel)
+```
+
+Above, I fit a model with all two-way interaction terms between clinical variables and used the "dredge" function to determine the best combination of these terms. This resulted in a model without any interaction, but with all linear and quadratic terms included from before. This gives us evidence that there is no significant interaction between clinical variables in our data.
+
+### Part D
+
+```{r}
+plot(fitted(topInteractionModel), qresiduals(topInteractionModel), ylab = "Randomized Quantile Residuals")
+```
+
+The residual plot shows approximately constant variance which suggests that our model fits the data well.
+
+### Part E
+
+```{r}
+topInteractionModel$deviance
+topInteractionModel$df.residual
+1 - pchisq(topInteractionModel$deviance, topInteractionModel$df.residual)
+```
+
+For this model we have a deviance of `r round(topInteractionModel$deviance, 3)` on `r topInteractionModel$df.residual` degrees of freedom, resulting in a Chi-square Goodness Of Fit statistic very close to 1. This suggests that our model fits the data very well and results in under dispersion. The level of under dispersion is not necessary concerning, however, and so we can judge this to be ok.
+
+# Section 2
+
+
+
+## Question 1 and 2
+
+```{r}
+newData <- select(abmData, abm, age, gl, priorrx, season)
+
+grouped <- newData %>%
+  mutate(age_cat = cut(age, breaks = c(0, 5, 15, max(age)), include.lowest = TRUE)) %>%
+  mutate(gl_cat = cut(gl, breaks = c(0, 80, max(gl)), include.lowest = TRUE)) %>%
+  group_by(age_cat, gl_cat, priorrx, season) %>%
+  summarise(abmRate = mean(abm), n = n(), y=sum(abm))
+```
+
+The variables must be grouped because working with grouped binomial data is very different than ungrouped. Grouped data allows us to estimamte parameters and compare trends between sets of observations rather than looking only at each observation individually.
+It also changes how we work with the data computationally, requiring us to check for sparsity based on the size of each group.
+
+## Question 3
+
+```{r}
+groupedModel <- glm(cbind(y, n-y)~ (age_cat + gl_cat + priorrx + season)^2, data=grouped, family= binomial)
+
+all.fits.grouped <- dredge(groupedModel)
+
+bestGroupedModel <- get.models(all.fits.grouped, 1)[[1]]
+summary(bestGroupedModel)
+
+```
+
+Here I built a model with all variables and two way interactions included and used "dredge" to find the best combination of terms. This resulted in keeping only the main effects of all variables.
+
+```{r}
+bestGroupedModel$deviance
+bestGroupedModel$df.residual
+1 - pchisq(bestGroupedModel$deviance, bestGroupedModel$df.residual)
+
+plot(grouped$n, grouped$y/grouped$n, xlim = c(0, max(grouped$n))) %>%
+abline(v=5, col="red")
+plot(fitted(bestGroupedModel), qresiduals(groupedModel), ylab = "Randomized Quantile Residuals")
+```
+
+Here we have a a deviance of 33.269 on 17 degrees of freedom, giving us a low Goodness Of Fit statistic of 0.0104. This suggests that our model does not fit the data very well.
+
+Also shown are a plot to check for sparsity with a red line at group size = 5, and the residuals plot which is hard to interpret but seems to show relatively constant variance.
+
+Even with relatively constant variance, however, our low Goodness Of Fit tells us that the model does not sufficiently fit the data.
+
+## Question 5
+
+```{r}
+modifiedData <- abmData %>%
+  mutate(age_cat = cut(age, breaks = c(0, 5, 15, max(age)), include.lowest = TRUE)) %>%
+  mutate(gl_cat = cut(gl, breaks = c(0, 80, max(gl)), include.lowest = TRUE))
+
+ungroupedModel <- glm(abm ~ age_cat + gl_cat + priorrx + season + 1, family = binomial, data = modifiedData)
+summary(ungroupedModel)
+
+ungroupedModel$deviance
+ungroupedModel$df.residual
+1 - pchisq(ungroupedModel$deviance, ungroupedModel$df.residual)
+
+plot(fitted(ungroupedModel), qresiduals(ungroupedModel), ylab = "Randomized Quantile Residuals")
+```
+
+After fitting the grouped binomial model to the ungrouped data we see that the model coefficients have stayed exactly the same but the Goodness Of Fit has changed. With a deviance of 295.4098 on 261 degrees of freedom, the Goodness Of Fit statistic increased to 0.0703. This puts the model fit on the edge, but within the acceptable range for fitting the data. I also produced a residual plot where we can see approximately constant varaince. Together, this tells us that while the grouped binomial model did not fit the grouped data, it does seem to fit the ungrouped data even if not very well.
