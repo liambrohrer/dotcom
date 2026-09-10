@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple Demo Page</title>
+<style>
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 20px;
+    line-height: 1.5;
+    color: #222;
+  }
+  h1 {
+    text-align: center;
+  }
+  .gallery {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 24px 0;
+  }
+  .gallery img {
+    width: 220px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+  video {
+    display: block;
+    width: 100%;
+    max-width: 600px;
+    margin: 24px auto;
+    border-radius: 8px;
+  }
+  pre {
+    background: #1e1e1e;
+    color: #dcdcdc;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<h1>My Simple Page</h1>
+
+<div class="gallery">
+  <img src="https://picsum.photos/id/10/400/300" alt="Placeholder image 1">
+  <img src="https://picsum.photos/id/20/400/300" alt="Placeholder image 2">
+  <img src="https://picsum.photos/id/30/400/300" alt="Placeholder image 3">
+</div>
+
+<video controls>
+  <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+<h2>Example Code</h2>
+<pre><code>function greet(name) {
+  return `Hello, ${name}!`;
+}
+
+console.log(greet("world"));
+</code></pre>
+
+</body>
+</html>
