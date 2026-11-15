@@ -367,10 +367,9 @@ font-family: "Poppins", sans-serif;
 padding: 20px;
 }
 </style>
-<div id="question-1" class="section level2">
-<h2>Question 1</h2>
-<pre class="r"><code>###Q1
-A1 &lt;- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+<div id="comparing-manhattan-and-euclidean-distances-for-two-data-pairs" class="section level2">
+<h2>Comparing Manhattan and Euclidean Distances for Two Data Pairs</h2>
+<pre class="r"><code>A1 &lt;- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 A2 &lt;- c(3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 
 B1 &lt;- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
@@ -396,8 +395,7 @@ one variable difference of two.</p>
 </div>
 <div id="mapping-schools-by-manhattan-distance-with-two-dimensional-mds" class="section level2">
 <h2>Mapping Schools by Manhattan Distance with Two-Dimensional MDS</h2>
-<pre class="r"><code>###Q2
-distances &lt;- dist(schoolData[2:12], &quot;manhattan&quot;)
+<pre class="r"><code>distances &lt;- dist(schoolData[2:12], &quot;manhattan&quot;)
 
 schoolPCO &lt;- cmdscale(distances, k=2, eig = TRUE)
 plot(schoolPCO$eig)</code></pre>
@@ -423,8 +421,7 @@ for <strong>15.77%</strong>.</p>
 <div id="plotting-school-mds-coordinates-by-location-and-counting-schools" class="section level2">
 <h2>Plotting School MDS Coordinates by Location and Counting
 Schools</h2>
-<pre class="r"><code>###Q3
-pointsPCO &lt;- as.data.frame(cbind(schoolData$location, schoolPCO$points))
+<pre class="r"><code>pointsPCO &lt;- as.data.frame(cbind(schoolData$location, schoolPCO$points))
 colnames(pointsPCO) &lt;- c(&quot;location&quot;, &quot;axis1&quot;, &quot;axis2&quot;)
 ggplot(pointsPCO, aes(x = as.numeric(axis1), y = as.numeric(axis2))) +
   geom_point() +
@@ -449,8 +446,7 @@ contributing to the difference in the spread of data.</p>
 </div>
 <div id="testing-whether-school-data-differ-by-location-using-permanova" class="section level2">
 <h2>Testing Whether School Data Differ by Location Using PERMANOVA</h2>
-<pre class="r"><code>###Q4
-schoolPermAn &lt;- adonis2(schoolData[,2:12]~schoolData[,1], method=&quot;bray&quot;)
+<pre class="r"><code>schoolPermAn &lt;- adonis2(schoolData[,2:12]~schoolData[,1], method=&quot;bray&quot;)
 schoolPermAn</code></pre>
 <pre><code>## Permutation test for adonis under reduced model
 ## Permutation: free
@@ -458,7 +454,7 @@ schoolPermAn</code></pre>
 ## 
 ## adonis2(formula = schoolData[, 2:12] ~ schoolData[, 1], method = &quot;bray&quot;)
 ##           Df SumOfSqs      R2      F Pr(&gt;F)  
-## Model      3  0.16805 0.07423 2.8063  0.013 *
+## Model      3  0.16805 0.07423 2.8063  0.017 *
 ## Residual 105  2.09594 0.92577                
 ## Total    108  2.26399 1.00000                
 ## ---
@@ -470,8 +466,7 @@ conclude that it represents a difference in group means.</p>
 </div>
 <div id="correlating-combined-school-data-with-the-two-mds-axes" class="section level2">
 <h2>Correlating Combined School Data with the Two MDS Axes</h2>
-<pre class="r"><code>###Q5
-combined &lt;- rowSums(schoolData[2:12])
+<pre class="r"><code>combined &lt;- rowSums(schoolData[2:12])
 
 cor(combined, as.numeric(pointsPCO$axis1))</code></pre>
 <pre><code>## [1] 0.9977324</code></pre>
