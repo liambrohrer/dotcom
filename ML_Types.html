@@ -7517,7 +7517,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Analyzing-and-Comparing-Models-for-Document-Classification">Analyzing and Comparing Models for Document Classification<a class="anchor-link" href="#Analyzing-and-Comparing-Models-for-Document-Classification">¶</a></h2><h2 id="Using-Naive-Bayes,-k-Nearest-Neighbors,-Support-Vector-Machines,-and-Artificial-Neural-Networks">Using Naive Bayes, k Nearest Neighbors, Support Vector Machines, and Artificial Neural Networks<a class="anchor-link" href="#Using-Naive-Bayes,-k-Nearest-Neighbors,-Support-Vector-Machines,-and-Artificial-Neural-Networks">¶</a></h2><h3 id="Liam-Black-Rohrer">Liam Black Rohrer<a class="anchor-link" href="#Liam-Black-Rohrer">¶</a></h3>
+<h1 id="Analyzing-and-Comparing-Models-for-Document-Classification">Analyzing and Comparing Models for Document Classification<a class="anchor-link" href="#Analyzing-and-Comparing-Models-for-Document-Classification">¶</a></h1><h2 id="Using-Naive-Bayes,-k-Nearest-Neighbors,-Support-Vector-Machines,-and-Artificial-Neural-Networks">Using Naive Bayes, k Nearest Neighbors, Support Vector Machines, and Artificial Neural Networks<a class="anchor-link" href="#Using-Naive-Bayes,-k-Nearest-Neighbors,-Support-Vector-Machines,-and-Artificial-Neural-Networks">¶</a></h2><h3 id="Liam-Black-Rohrer">Liam Black Rohrer<a class="anchor-link" href="#Liam-Black-Rohrer">¶</a></h3>
 </div>
 </div>
 </div>
@@ -7537,7 +7537,7 @@ a.anchor-link {
 <span class="n">train_raw</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'train.csv'</span><span class="p">)</span>
 <span class="n">test_raw</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'test.csv'</span><span class="p">)</span>
 
-<span class="c1">#Vectorization</span>
+<span class="c1"># Vectorization</span>
 <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">()</span>
 <span class="n">X_train</span> <span class="o">=</span> <span class="n">vectorizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">train_raw</span><span class="p">[</span><span class="s1">'Article'</span><span class="p">])</span>   <span class="c1"># fit and transform</span>
 <span class="n">X_test</span> <span class="o">=</span> <span class="n">vectorizer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">test_raw</span><span class="p">[</span><span class="s1">'Article'</span><span class="p">])</span>        <span class="c1"># transform only</span>
