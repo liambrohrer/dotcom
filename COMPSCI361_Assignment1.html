@@ -7517,7 +7517,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="COMPSCI-361-Assignment-1">COMPSCI 361 Assignment 1<a class="anchor-link" href="#COMPSCI-361-Assignment-1">¶</a></h1><h2 id="Liam-Rohrer-(973023817)">Liam Rohrer (973023817)<a class="anchor-link" href="#Liam-Rohrer-(973023817)">¶</a></h2><h2 id="Task-1-(Coding)">Task 1 (Coding)<a class="anchor-link" href="#Task-1-(Coding)">¶</a></h2><h3 id="Part-1">Part 1<a class="anchor-link" href="#Part-1">¶</a></h3>
+<h1 id="Classifying-Wine-Quality-with-Decision-Trees">Classifying Wine Quality with Decision Trees<a class="anchor-link" href="#Classifying-Wine-Quality-with-Decision-Trees">¶</a></h1>
 </div>
 </div>
 </div>
@@ -7624,7 +7624,6 @@ a.anchor-link {
 <p>I converted wine quality into a binary variables to make it easier to classify and interpret predictions using a decision tree. I found that the minimum and maximum values for "quality" were 3 and 8, so I set 6 as my cutoff point. I divided rankings into either high (&gt;=6) or low (&lt;6) quality which were represented by 1 and 0, respectively.
 I then divided my data into a training and testing set with a 70/30 split. I did this to use the largest training set possible, while still keeping enough data to accurately evaluate my model. The specific split was chosen by construct as it seems to be a common choice for training machine learning models.</p>
 <p>The tree produced is long, including many splits. It appears to continue splitting nodes until all observations are correctly classified by the model. This leads to the model presumably being over fit.</p>
-<h3 id="Part-2">Part 2<a class="anchor-link" href="#Part-2">¶</a></h3>
 </div>
 </div>
 </div>
@@ -7741,7 +7740,6 @@ I then divided my data into a training and testing set with a 70/30 split. I did
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p>The trees created here are limited to 2, 3, and 4 levels of splits. This makes it much easier to understand what decisions are being made, but the significant restrictions in depth mean that the models are likely underfit to the data.</p>
-<h3 id="Part-3">Part 3<a class="anchor-link" href="#Part-3">¶</a></h3>
 </div>
 </div>
 </div>
@@ -7850,10 +7848,10 @@ Overall, the unrestricted model seems to be performing relatively well but is ov
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Task-2-(Reflection)">Task 2 (Reflection)<a class="anchor-link" href="#Task-2-(Reflection)">¶</a></h2><h3 id="Part-1:">Part 1:<a class="anchor-link" href="#Part-1:">¶</a></h3><p>Changing the splitting criterion will change the logic of how our model divides observations at each split.
+<h3 id="Model-Analysis">Model Analysis<a class="anchor-link" href="#Model-Analysis">¶</a></h3><p>Changing the splitting criterion will change the logic of how the model divides observations at each split.
 Currently, we're using maximum information gain which redces entropy as much as possible at each step and considers the entire class distribution. This prioritizes node purity and leads to deep splits in our tree.
 We could instead consider using minumum misclassification error. Misclassification error only cares about the majority class and so will make much less targeted splits. This will likely make for a simpler, shallower tree and lead to a higher risk of underfitting compared to the criterion we used.</p>
-<h3 id="Part-2:">Part 2:<a class="anchor-link" href="#Part-2:">¶</a></h3><p>I used my testing procedure in Task 1-C to compare the overall accuracy of the unrestricted model on the training data to its accuracy on the testing data. I found that the model performed perfectly on the training data, but only classified 75% of the test observations correctly. This indicates that the model is overfit to the data.</p>
+<h3 id="Result-Analysis">Result Analysis<a class="anchor-link" href="#Result-Analysis">¶</a></h3><p>I used my testing procedure to compare the overall accuracy of the unrestricted model on the training data to its accuracy on the testing data. I found that the model performed perfectly on the training data, but only classified 75% of the test observations correctly. This indicates that the model is overfit to the data.</p>
 <p>In comparison, I also assessed the same metrics for a model with a depth limit of 6. I found that, although it performed worse on the training data, it performed better on the testing data. This further confirms overfitting in the unrestricted model.</p>
 </div>
 </div>
