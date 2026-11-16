@@ -8900,6 +8900,7 @@ Best parameters:
 
 <span class="nb">print</span><span class="p">(</span><span class="s1">'Ranked Prediction Performance'</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'MAE:  </span><span class="si">{</span><span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">y_actual</span><span class="p">,</span><span class="w"> </span><span class="n">y_ranked</span><span class="p">)</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'SD: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y_actual</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">y_ranked</span><span class="p">),</span><span class="w"> </span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -9108,8 +9109,21 @@ Best parameters:
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Ranked Prediction Performance
 MAE:  6.0412
+SD: 5.0569
 </pre>
 </div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=05866470">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Model-Performance">Model Performance<a class="anchor-link" href="#Model-Performance">¶</a></h2><p>These results suggest that our prdictions will be about six positions off on average, but with significant variability in our uncertainty. The high variability of MAE could be due to the nature of formula 1, where better teams are often more consistent, making higher finishing positions more predictable than those lower down.</p>
+<p>The level of accuracy seems fairly consistent with what you would get from an average F1 fan. This is not suprising as the predictors used are very simple. This results in the model picking up on much of the easily explainabled variability, but needing additional useful predictors to generate any significantly interesting insights.</p>
 </div>
 </div>
 </div>
