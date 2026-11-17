@@ -1,0 +1,34 @@
+<div id="stock-results">Loading stock data…</div>
+
+<script>
+  const dataUrl =
+    "https://raw.githubusercontent.com/liambrohrer/stock_app/main/latest_stock_data.json";
+
+  async function showStockData() {
+    const container = document.getElementById("stock-results");
+
+    try {
+      const response = await fetch(`${dataUrl}?t=${Date.now()}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const stocks = await response.json();
+
+      container.innerHTML = stocks.map(stock => `
+        <section>
+          <h2>${stock.Stock} (${stock.Symbol})</h2>
+          <p>Date: ${stock.Date}</p>
+          <p>Close: ${stock.close ?? "Unavailable"}</p>
+          <p>Open: ${stock.open ?? "Unavailable"}</p>
+          <p>High: ${stock.high ?? "Unavailable"}</p>
+          <p>Low: ${stock.low ?? "Unavailable"}</p>
+          <p>Volume: ${stock.volume ?? "Unavailable"}</p>
+        </section>
+      `).join("");
+    } catch (error) {
+      container.textContent = "Could not load the latest stock data.";
+      console.error(error);
+    }
+  }
+
+  showStockData();
+</script>
