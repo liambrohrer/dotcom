@@ -1,3 +1,35 @@
+<style>
+  #stock-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    font-family: Arial, sans-serif;
+  }
+
+  .stock-card {
+    padding: 20px;
+    border: 1px solid #d8dee8;
+    border-radius: 12px;
+    background: #f8fafc;
+    box-shadow: 0 2px 8px rgba(20, 35, 60, 0.08);
+  }
+
+  .stock-card h2 {
+    margin: 0 0 8px;
+    color: #17365d;
+  }
+
+  .stock-card p {
+    margin: 6px 0;
+    color: #344054;
+  }
+
+  .stock-date {
+    color: #667085 !important;
+    font-size: 0.9rem;
+  }
+</style>
+
 <div id="stock-results">Loading stock data…</div>
 
 <script>
@@ -14,9 +46,9 @@
       const stocks = await response.json();
 
       container.innerHTML = stocks.map(stock => `
-        <section>
+        <section class="stock-card">
           <h2>${stock.Stock} (${stock.Symbol})</h2>
-          <p>Date: ${stock.Date}</p>
+          <p class="stock-date">Date: ${stock.Date}</p>
           <p>Close: ${stock.close ?? "Unavailable"}</p>
           <p>Open: ${stock.open ?? "Unavailable"}</p>
           <p>High: ${stock.high ?? "Unavailable"}</p>
