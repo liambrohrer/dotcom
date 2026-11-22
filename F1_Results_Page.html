@@ -306,6 +306,7 @@
 
   <script>
 
+    
     // GitHub location of the F1 predictions JSON file
 
     const DATA_URL =
@@ -324,10 +325,32 @@
     }
 
 
-    // Get driver name
+    // Get the driver's full name
 
     function getDriverName(driver) {
 
+      // Check for separate first and last name fields
+      const firstName =
+        driver.forename ||
+        driver.givenName ||
+        driver.driver_forename ||
+        driver.first_name ||
+        "";
+
+      const lastName =
+        driver.surname ||
+        driver.familyName ||
+        driver.driver_surname ||
+        driver.last_name ||
+        "";
+
+      if (firstName || lastName) {
+        return capitaliseName(
+          `${firstName} ${lastName}`.trim()
+        );
+      }
+
+      // Fall back to an existing full-name field
       return capitaliseName(
         driver.driver_name ||
         driver.full_name ||
@@ -344,6 +367,22 @@
         driver.constructor_name ||
         driver.constructorId
       );
+    }
+
+
+    // Create a consistent driver identifier for matching records
+
+    function getDriverKey(driver) {
+
+      if (driver.driverId) {
+        return String(driver.driverId).toLowerCase();
+      }
+
+      if (driver.driverRef) {
+        return String(driver.driverRef).toLowerCase();
+      }
+
+      return getDriverName(driver).toLowerCase();
     }
 
 
@@ -409,12 +448,11 @@
             data.latest_race
           );
 
-          displayPredictions(
-            "latest-predictions",
-            data.latest_race.predictions
-          );
+          // Display predictions and actual results
+          // using the same driver order
 
-          displayActualResults(
+          displayLatestRaceComparison(
+            data.latest_race.predictions,
             data.latest_race.actual_results
           );
         }
@@ -472,23 +510,20 @@
     }
 
 
-    // Display prediction table
+    // Sort predictions by predicted rank
 
-    function displayPredictions(elementId, predictions) {
+    function sortPredictions(predictions) {
 
-      const container = document.getElementById(elementId);
-
-      if (!predictions || predictions.length === 0) {
-        container.textContent = "No predictions available.";
-        return;
-      }
-
-      // Sort by predicted rank
-
-      const sorted = [...predictions].sort((a, b) =>
+      return [...(predictions || [])].sort((a, b) =>
         Number(a.predicted_rank ?? 999) -
         Number(b.predicted_rank ?? 999)
       );
+    }
+
+
+    // Create a prediction table
+
+    function createPredictionTable(predictions) {
 
       const table = document.createElement("table");
       table.className = "prediction-table";
@@ -505,15 +540,13 @@
 
       const tbody = document.createElement("tbody");
 
-      sorted.forEach(driver => {
+      predictions.forEach(driver => {
 
         const row = document.createElement("tr");
 
         const rank = document.createElement("td");
         rank.className = "position";
-
-        rank.textContent =
-          driver.predicted_rank ?? "—";
+        rank.textContent = driver.predicted_rank ?? "—";
 
         const driverName = document.createElement("td");
         driverName.textContent = getDriverName(driver);
@@ -523,36 +556,139 @@
 
         row.append(rank, driverName, constructor);
         tbody.appendChild(row);
-
       });
 
       table.appendChild(tbody);
-      container.replaceChildren(table);
+
+      return table;
     }
 
 
-    // Display actual race results
+    // Display upcoming race predictions
 
-    function displayActualResults(results) {
+    function displayPredictions(elementId, predictions) {
 
-      const container = document.getElementById("actual-results");
+      const container = document.getElementById(elementId);
 
-      if (!results || results.length === 0) {
-        container.textContent = "No actual results available.";
+      if (!predictions || predictions.length === 0) {
+        container.textContent = "No predictions available.";
         return;
       }
 
-      // Sort by actual finishing position
+      const sorted = sortPredictions(predictions);
 
-      const sorted = [...results].sort((a, b) =>
-        Number(a.positionOrder ?? 999) -
-        Number(b.positionOrder ?? 999)
+      container.replaceChildren(
+        createPredictionTable(sorted)
+      );
+    }
+
+
+    // Display latest race predictions and actual results
+    // in matching driver order
+
+    function displayLatestRaceComparison(predictions, results) {
+
+      const predictionContainer =
+        document.getElementById("latest-predictions");
+
+      const resultsContainer =
+        document.getElementById("actual-results");
+
+      if (!predictions || predictions.length === 0) {
+        predictionContainer.textContent = "No predictions available.";
+        resultsContainer.textContent = "No actual results available.";
+        return;
+      }
+
+      if (!results || results.length === 0) {
+        displayPredictions("latest-predictions", predictions);
+        resultsContainer.textContent = "No actual results available.";
+        return;
+      }
+
+      // Sort predictions by predicted rank
+
+      const sortedPredictions = sortPredictions(predictions);
+
+      // Match actual results to predicted driver order
+
+      const actualByDriver = new Map(
+        results.map(driver => [
+          getDriverKey(driver),
+          driver
+        ])
       );
 
-      const table = document.createElement("table");
-      table.className = "prediction-table";
+      const orderedResults = [];
 
-      table.innerHTML = `
+      sortedPredictions.forEach(driver => {
+
+        const actualResult = actualByDriver.get(
+          getDriverKey(driver)
+        );
+
+        if (actualResult) {
+          orderedResults.push(actualResult);
+          actualByDriver.delete(getDriverKey(driver));
+        } else {
+          orderedResults.push(null);
+        }
+      });
+
+      // Append any drivers not found in the predictions
+
+      const remainingResults = [...actualByDriver.values()]
+        .sort((a, b) =>
+          Number(a.positionOrder ?? 999) -
+          Number(b.positionOrder ?? 999)
+        );
+
+      orderedResults.push(...remainingResults);
+
+      // Build predictions table
+
+      const predictionTable = document.createElement("table");
+      predictionTable.className = "prediction-table";
+
+      predictionTable.innerHTML = `
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Driver</th>
+            <th>Constructor</th>
+          </tr>
+        </thead>
+      `;
+
+      const predictionBody = document.createElement("tbody");
+
+      sortedPredictions.forEach(driver => {
+
+        const row = document.createElement("tr");
+
+        const rank = document.createElement("td");
+        rank.className = "position";
+        rank.textContent = driver.predicted_rank ?? "—";
+
+        const driverName = document.createElement("td");
+        driverName.textContent = getDriverName(driver);
+
+        const constructor = document.createElement("td");
+        constructor.textContent = getConstructorName(driver);
+
+        row.append(rank, driverName, constructor);
+        predictionBody.appendChild(row);
+      });
+
+      predictionTable.appendChild(predictionBody);
+
+
+      // Build actual results table in the same order
+
+      const resultsTable = document.createElement("table");
+      resultsTable.className = "prediction-table";
+
+      resultsTable.innerHTML = `
         <thead>
           <tr>
             <th>Pos.</th>
@@ -562,31 +698,52 @@
         </thead>
       `;
 
-      const tbody = document.createElement("tbody");
+      const resultsBody = document.createElement("tbody");
 
-      sorted.forEach(driver => {
+      orderedResults.forEach(driver => {
 
         const row = document.createElement("tr");
 
-        const position = document.createElement("td");
-        position.className = "position";
+        if (driver) {
 
-        position.textContent =
-          driver.positionOrder ?? "—";
+          const position = document.createElement("td");
+          position.className = "position";
+          position.textContent = driver.positionOrder ?? "—";
 
-        const driverName = document.createElement("td");
-        driverName.textContent = getDriverName(driver);
+          const driverName = document.createElement("td");
+          driverName.textContent = getDriverName(driver);
 
-        const constructor = document.createElement("td");
-        constructor.textContent = getConstructorName(driver);
+          const constructor = document.createElement("td");
+          constructor.textContent = getConstructorName(driver);
 
-        row.append(position, driverName, constructor);
-        tbody.appendChild(row);
+          row.append(position, driverName, constructor);
 
+        } else {
+
+          // No matching actual result
+
+          const position = document.createElement("td");
+          position.textContent = "—";
+
+          const driverName = document.createElement("td");
+          driverName.textContent = "No result";
+
+          const constructor = document.createElement("td");
+          constructor.textContent = "—";
+
+          row.append(position, driverName, constructor);
+        }
+
+        resultsBody.appendChild(row);
       });
 
-      table.appendChild(tbody);
-      container.replaceChildren(table);
+      resultsTable.appendChild(resultsBody);
+
+
+      // Display both tables
+
+      predictionContainer.replaceChildren(predictionTable);
+      resultsContainer.replaceChildren(resultsTable);
     }
 
 
@@ -594,7 +751,7 @@
 
     loadF1Predictions();
 
-  </script>
+</script>
 
 </body>
 </html>
