@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -327,16 +326,24 @@
     // Get driver's last name
     
     function getDriverName(driver) {
-    
-      return capitaliseName(
+      const surname =
         driver.surname ||
         driver.familyName ||
         driver.driver_surname ||
-        driver.last_name ||
+        driver.last_name;
+    
+      if (surname) {
+        return capitaliseName(surname);
+      }
+    
+      const fallback =
         driver.driver_name ||
         driver.full_name ||
-        driver.driverId
-      );
+        driver.driverId ||
+        "Unknown";
+    
+      // Replace underscores with spaces, then return the final name
+      return capitaliseName(fallback).trim().split(/\s+/).pop();
     }
 
 
