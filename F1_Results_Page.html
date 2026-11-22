@@ -324,20 +324,20 @@
         .replace(/\b\w/g, char => char.toUpperCase());
     }
 
-// Get driver's last name
-
-function getDriverName(driver) {
-
-  return capitaliseName(
-    driver.surname ||
-    driver.familyName ||
-    driver.driver_surname ||
-    driver.last_name ||
-    driver.driver_name ||
-    driver.full_name ||
-    driver.driverId
-  );
-}
+    // Get driver's last name
+    
+    function getDriverName(driver) {
+    
+      return capitaliseName(
+        driver.surname ||
+        driver.familyName ||
+        driver.driver_surname ||
+        driver.last_name ||
+        driver.driver_name ||
+        driver.full_name ||
+        driver.driverId
+      );
+    }
 
 
     // Get constructor name
