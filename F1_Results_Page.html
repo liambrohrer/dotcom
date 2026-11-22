@@ -40,7 +40,7 @@
 
     .main-container {
       background: var(--color-surface);
-      max-width: 840px;
+      max-width: 1000px;
       margin: auto;
       padding: 48px 56px;
       border-radius: var(--radius);
@@ -74,8 +74,9 @@
     }
 
     h3 {
-      font-size: 1.15em;
+      font-size: 1.05em;
       color: var(--color-ink);
+      margin-top: 0;
     }
 
     p {
@@ -124,7 +125,7 @@
 
     table {
       border-collapse: collapse;
-      margin: 1.2em 0;
+      margin: 1em 0;
       width: 100%;
       border-radius: 8px;
       overflow: hidden;
@@ -133,7 +134,7 @@
 
     th, td {
       border: 1px solid var(--color-border);
-      padding: 10px 14px;
+      padding: 10px 12px;
     }
 
     th {
@@ -147,21 +148,13 @@
       background-color: #f7fafc;
     }
 
-    img {
-      display: block;
-      margin: 1.2em auto;
-      max-width: 100%;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-lift);
-    }
-
     hr {
       border: none;
       border-top: 1px solid var(--color-border);
       margin: 2.2em 0;
     }
 
-    /* Race prediction styling */
+    /* Race information */
 
     .subtitle {
       margin-top: 1em;
@@ -184,19 +177,39 @@
       margin-top: 1.2em;
     }
 
-    .prediction-table {
-      margin-top: 1em;
+    /* Side-by-side comparison */
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+      margin-top: 1.5em;
     }
 
-    .prediction-table td:first-child,
-    .prediction-table th:first-child {
-      text-align: center;
-      width: 65px;
+    .comparison-column {
+      min-width: 0;
+    }
+
+    .comparison-column h3 {
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--color-border);
     }
 
     .position {
       font-weight: 700;
       color: var(--color-accent);
+      text-align: center;
+    }
+
+    .prediction-table {
+      margin-top: 1em;
+      font-size: 0.9em;
+    }
+
+    .prediction-table td:first-child,
+    .prediction-table th:first-child {
+      text-align: center;
+      width: 75px;
     }
 
     .error-message {
@@ -208,17 +221,22 @@
       border-radius: 0 6px 6px 0;
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 650px) {
       body {
         padding: 24px 12px;
       }
 
       .main-container {
-        padding: 28px 24px;
+        padding: 28px 20px;
       }
 
       h1 {
         font-size: 1.75em;
+      }
+
+      .comparison-grid {
+        grid-template-columns: 1fr;
+        gap: 28px;
       }
 
       table {
@@ -249,25 +267,37 @@
 
       <p id="last-updated"></p>
 
+      <!-- Upcoming race -->
+
       <section>
         <h2>Upcoming Race Predictions</h2>
+
         <div id="upcoming-race-info"></div>
         <div id="upcoming-predictions"></div>
       </section>
 
       <hr>
 
+      <!-- Latest race comparison -->
+
       <section>
-        <h2>Latest Race Predictions</h2>
+        <h2>Latest Race</h2>
+
         <div id="latest-race-info"></div>
-        <div id="latest-predictions"></div>
-      </section>
 
-      <hr>
+        <div class="comparison-grid">
 
-      <section>
-        <h2>Actual Race Results</h2>
-        <div id="actual-results"></div>
+          <div class="comparison-column">
+            <h3>Predictions</h3>
+            <div id="latest-predictions"></div>
+          </div>
+
+          <div class="comparison-column">
+            <h3>Actual Results</h3>
+            <div id="actual-results"></div>
+          </div>
+
+        </div>
       </section>
 
     </div>
@@ -277,11 +307,48 @@
   <script>
 
     // GitHub location of the F1 predictions JSON file
+
     const DATA_URL =
       "https://raw.githubusercontent.com/liambrohrer/F1_Predictions/main/public/f1_predictions.json";
 
 
+    // Capitalise the first letter of each word
+
+    function capitaliseName(name) {
+
+      if (!name) return "Unknown";
+
+      return String(name)
+        .replace(/[_-]/g, " ")
+        .replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+
+    // Get driver name
+
+    function getDriverName(driver) {
+
+      return capitaliseName(
+        driver.driver_name ||
+        driver.full_name ||
+        driver.driverId
+      );
+    }
+
+
+    // Get constructor name
+
+    function getConstructorName(driver) {
+
+      return capitaliseName(
+        driver.constructor_name ||
+        driver.constructorId
+      );
+    }
+
+
     // Load the F1 predictions JSON file
+
     async function loadF1Predictions() {
 
       const loading = document.getElementById("loading");
@@ -290,7 +357,8 @@
 
       try {
 
-        // Fetch the latest JSON file, avoiding cached responses
+        // Fetch the latest JSON file
+
         const response = await fetch(
           `${DATA_URL}?t=${Date.now()}`,
           { cache: "no-store" }
@@ -303,7 +371,9 @@
         const data = await response.json();
 
         // Display last updated timestamp
+
         if (data.last_updated) {
+
           const updated = new Date(data.last_updated);
 
           document.getElementById("last-updated").textContent =
@@ -311,6 +381,7 @@
         }
 
         // Upcoming race
+
         if (data.upcoming_race) {
 
           displayRaceInfo(
@@ -324,11 +395,13 @@
           );
 
         } else {
+
           document.getElementById("upcoming-race-info").textContent =
             "No upcoming race information available.";
         }
 
         // Latest race
+
         if (data.latest_race) {
 
           displayRaceInfo(
@@ -356,20 +429,21 @@
 
         error.textContent =
           `Error loading F1 data: ${err.message}`;
-
       }
     }
 
 
     // Display race information
+
     function displayRaceInfo(elementId, race) {
 
       const container = document.getElementById(elementId);
 
-      const name =
+      const name = capitaliseName(
         race.race_name ||
         race.raceName ||
-        "Race information unavailable";
+        "Race information unavailable"
+      );
 
       const round = race.round
         ? `Round ${race.round}`
@@ -398,26 +472,8 @@
     }
 
 
-    // Get driver name
-    function getDriverName(driver) {
-
-      return driver.driver_name ||
-        driver.full_name ||
-        driver.driverId ||
-        "Unknown";
-    }
-
-
-    // Get constructor name
-    function getConstructorName(driver) {
-
-      return driver.constructor_name ||
-        driver.constructorId ||
-        "—";
-    }
-
-
     // Display prediction table
+
     function displayPredictions(elementId, predictions) {
 
       const container = document.getElementById(elementId);
@@ -427,9 +483,70 @@
         return;
       }
 
+      // Sort by predicted rank
+
       const sorted = [...predictions].sort((a, b) =>
-        Number(a.predicted_position ?? a.predicted_rank ?? 999) -
-        Number(b.predicted_position ?? b.predicted_rank ?? 999)
+        Number(a.predicted_rank ?? 999) -
+        Number(b.predicted_rank ?? 999)
+      );
+
+      const table = document.createElement("table");
+      table.className = "prediction-table";
+
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Driver</th>
+            <th>Constructor</th>
+          </tr>
+        </thead>
+      `;
+
+      const tbody = document.createElement("tbody");
+
+      sorted.forEach(driver => {
+
+        const row = document.createElement("tr");
+
+        const rank = document.createElement("td");
+        rank.className = "position";
+
+        rank.textContent =
+          driver.predicted_rank ?? "—";
+
+        const driverName = document.createElement("td");
+        driverName.textContent = getDriverName(driver);
+
+        const constructor = document.createElement("td");
+        constructor.textContent = getConstructorName(driver);
+
+        row.append(rank, driverName, constructor);
+        tbody.appendChild(row);
+
+      });
+
+      table.appendChild(tbody);
+      container.replaceChildren(table);
+    }
+
+
+    // Display actual race results
+
+    function displayActualResults(results) {
+
+      const container = document.getElementById("actual-results");
+
+      if (!results || results.length === 0) {
+        container.textContent = "No actual results available.";
+        return;
+      }
+
+      // Sort by actual finishing position
+
+      const sorted = [...results].sort((a, b) =>
+        Number(a.positionOrder ?? 999) -
+        Number(b.positionOrder ?? 999)
       );
 
       const table = document.createElement("table");
@@ -455,66 +572,7 @@
         position.className = "position";
 
         position.textContent =
-          driver.predicted_position ??
-          driver.predicted_rank ??
-          "—";
-
-        const driverName = document.createElement("td");
-        driverName.textContent = getDriverName(driver);
-
-        const constructor = document.createElement("td");
-        constructor.textContent = getConstructorName(driver);
-
-        row.append(position, driverName, constructor);
-        tbody.appendChild(row);
-
-      });
-
-      table.appendChild(tbody);
-      container.replaceChildren(table);
-    }
-
-
-    // Display actual race results
-    function displayActualResults(results) {
-
-      const container = document.getElementById("actual-results");
-
-      if (!results || results.length === 0) {
-        container.textContent = "No actual results available.";
-        return;
-      }
-
-      const sorted = [...results].sort((a, b) =>
-        Number(a.positionOrder ?? a.position ?? 999) -
-        Number(b.positionOrder ?? b.position ?? 999)
-      );
-
-      const table = document.createElement("table");
-
-      table.innerHTML = `
-        <thead>
-          <tr>
-            <th>Pos.</th>
-            <th>Driver</th>
-            <th>Constructor</th>
-          </tr>
-        </thead>
-      `;
-
-      const tbody = document.createElement("tbody");
-
-      sorted.forEach(driver => {
-
-        const row = document.createElement("tr");
-
-        const position = document.createElement("td");
-        position.className = "position";
-
-        position.textContent =
-          driver.positionOrder ??
-          driver.position ??
-          "—";
+          driver.positionOrder ?? "—";
 
         const driverName = document.createElement("td");
         driverName.textContent = getDriverName(driver);
@@ -533,6 +591,7 @@
 
 
     // Load data when the page opens
+
     loadF1Predictions();
 
   </script>
