@@ -324,39 +324,20 @@
         .replace(/\b\w/g, char => char.toUpperCase());
     }
 
+// Get driver's last name
 
-    // Get the driver's full name
+function getDriverName(driver) {
 
-    function getDriverName(driver) {
-
-      // Check for separate first and last name fields
-      const firstName =
-        driver.forename ||
-        driver.givenName ||
-        driver.driver_forename ||
-        driver.first_name ||
-        "";
-
-      const lastName =
-        driver.surname ||
-        driver.familyName ||
-        driver.driver_surname ||
-        driver.last_name ||
-        "";
-
-      if (firstName || lastName) {
-        return capitaliseName(
-          `${firstName} ${lastName}`.trim()
-        );
-      }
-
-      // Fall back to an existing full-name field
-      return capitaliseName(
-        driver.driver_name ||
-        driver.full_name ||
-        driver.driverId
-      );
-    }
+  return capitaliseName(
+    driver.surname ||
+    driver.familyName ||
+    driver.driver_surname ||
+    driver.last_name ||
+    driver.driver_name ||
+    driver.full_name ||
+    driver.driverId
+  );
+}
 
 
     // Get constructor name
