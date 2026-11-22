@@ -1,0 +1,541 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Formula 1 Race Predictions</title>
+
+  <style>
+    :root {
+      --color-ink: #1f2933;
+      --color-muted: #52616f;
+      --color-accent: #1a5f7a;
+      --color-accent-light: #57a6c9;
+      --color-bg: #abd0f5;
+      --color-surface: #ffffff;
+      --color-border: #e1e6eb;
+      --radius: 12px;
+      --shadow-soft: 0 6px 20px rgba(31, 41, 51, 0.08);
+      --shadow-lift: 0 10px 30px rgba(31, 41, 51, 0.12);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--color-ink);
+      background: linear-gradient(180deg, #f5f8fb 0%, var(--color-accent) 100%);
+      padding: 56px 20px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .main-container {
+      background: var(--color-surface);
+      max-width: 840px;
+      margin: auto;
+      padding: 48px 56px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid var(--color-border);
+    }
+
+    h1, h2, h3, h4 {
+      font-weight: 700;
+      color: var(--color-ink);
+      letter-spacing: -0.01em;
+      margin-top: 1.6em;
+      margin-bottom: 0.5em;
+    }
+
+    h1 {
+      font-size: 2.25em;
+      color: var(--color-accent);
+      margin-top: 0;
+      padding-bottom: 0.4em;
+      border-bottom: 2px solid var(--color-accent-light);
+    }
+
+    h2 {
+      font-size: 1.2em;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-accent);
+      padding-bottom: 0.2em;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    h3 {
+      font-size: 1.15em;
+      color: var(--color-ink);
+    }
+
+    p {
+      color: var(--color-muted);
+      margin-bottom: 0.8em;
+    }
+
+    ul, ol {
+      color: var(--color-muted);
+      margin: 0.5em 0 1em 1.4em;
+    }
+
+    li {
+      margin-bottom: 0.3em;
+    }
+
+    a:link, a:visited {
+      color: var(--color-accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    a:hover {
+      color: var(--color-accent-light);
+      border-bottom-color: var(--color-accent-light);
+    }
+
+    pre {
+      background: #f4f8fa;
+      border-left: 4px solid var(--color-accent);
+      border-radius: 0 6px 6px 0;
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin: 1em 0;
+    }
+
+    code {
+      font-family: "Fira Code", "Courier New", monospace;
+      font-size: 0.9em;
+      background: #eef4f6;
+      color: var(--color-accent);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 1.2em 0;
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow-soft);
+    }
+
+    th, td {
+      border: 1px solid var(--color-border);
+      padding: 10px 14px;
+    }
+
+    th {
+      background-color: var(--color-accent);
+      color: white;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #f7fafc;
+    }
+
+    img {
+      display: block;
+      margin: 1.2em auto;
+      max-width: 100%;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lift);
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--color-border);
+      margin: 2.2em 0;
+    }
+
+    /* Race prediction styling */
+
+    .subtitle {
+      margin-top: 1em;
+    }
+
+    .race-info {
+      background: #f4f8fa;
+      border-left: 4px solid var(--color-accent-light);
+      padding: 14px 18px;
+      margin: 1em 0;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .race-info p {
+      margin: 0.2em 0;
+    }
+
+    #last-updated {
+      font-size: 0.85em;
+      margin-top: 1.2em;
+    }
+
+    .prediction-table {
+      margin-top: 1em;
+    }
+
+    .prediction-table td:first-child,
+    .prediction-table th:first-child {
+      text-align: center;
+      width: 65px;
+    }
+
+    .position {
+      font-weight: 700;
+      color: var(--color-accent);
+    }
+
+    .error-message {
+      background: #fff1f0;
+      color: #a12622;
+      border-left: 4px solid #c0392b;
+      padding: 14px 18px;
+      margin-top: 1em;
+      border-radius: 0 6px 6px 0;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 24px 12px;
+      }
+
+      .main-container {
+        padding: 28px 24px;
+      }
+
+      h1 {
+        font-size: 1.75em;
+      }
+
+      table {
+        font-size: 0.85em;
+      }
+
+      th, td {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="main-container">
+
+    <h1>Formula 1 Race Predictions</h1>
+
+    <p class="subtitle">
+      Machine learning predictions for the Formula 1 season.
+    </p>
+
+    <div id="loading">Loading race data...</div>
+    <div id="error" class="error-message" hidden></div>
+
+    <div id="race-content" hidden>
+
+      <p id="last-updated"></p>
+
+      <section>
+        <h2>Upcoming Race Predictions</h2>
+        <div id="upcoming-race-info"></div>
+        <div id="upcoming-predictions"></div>
+      </section>
+
+      <hr>
+
+      <section>
+        <h2>Latest Race Predictions</h2>
+        <div id="latest-race-info"></div>
+        <div id="latest-predictions"></div>
+      </section>
+
+      <hr>
+
+      <section>
+        <h2>Actual Race Results</h2>
+        <div id="actual-results"></div>
+      </section>
+
+    </div>
+  </div>
+
+
+  <script>
+
+    // GitHub location of the F1 predictions JSON file
+    const DATA_URL =
+      "https://raw.githubusercontent.com/liambrohrer/F1_Predictions/main/public/f1_predictions.json";
+
+
+    // Load the F1 predictions JSON file
+    async function loadF1Predictions() {
+
+      const loading = document.getElementById("loading");
+      const error = document.getElementById("error");
+      const content = document.getElementById("race-content");
+
+      try {
+
+        // Fetch the latest JSON file, avoiding cached responses
+        const response = await fetch(
+          `${DATA_URL}?t=${Date.now()}`,
+          { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Unable to load predictions (${response.status})`);
+        }
+
+        const data = await response.json();
+
+        // Display last updated timestamp
+        if (data.last_updated) {
+          const updated = new Date(data.last_updated);
+
+          document.getElementById("last-updated").textContent =
+            `Last updated: ${updated.toLocaleString()}`;
+        }
+
+        // Upcoming race
+        if (data.upcoming_race) {
+
+          displayRaceInfo(
+            "upcoming-race-info",
+            data.upcoming_race
+          );
+
+          displayPredictions(
+            "upcoming-predictions",
+            data.upcoming_race.predictions
+          );
+
+        } else {
+          document.getElementById("upcoming-race-info").textContent =
+            "No upcoming race information available.";
+        }
+
+        // Latest race
+        if (data.latest_race) {
+
+          displayRaceInfo(
+            "latest-race-info",
+            data.latest_race
+          );
+
+          displayPredictions(
+            "latest-predictions",
+            data.latest_race.predictions
+          );
+
+          displayActualResults(
+            data.latest_race.actual_results
+          );
+        }
+
+        loading.hidden = true;
+        content.hidden = false;
+
+      } catch (err) {
+
+        loading.hidden = true;
+        error.hidden = false;
+
+        error.textContent =
+          `Error loading F1 data: ${err.message}`;
+
+      }
+    }
+
+
+    // Display race information
+    function displayRaceInfo(elementId, race) {
+
+      const container = document.getElementById(elementId);
+
+      const name =
+        race.race_name ||
+        race.raceName ||
+        "Race information unavailable";
+
+      const round = race.round
+        ? `Round ${race.round}`
+        : "";
+
+      const date = race.date
+        ? new Date(race.date).toLocaleDateString()
+        : "";
+
+      const info = document.createElement("div");
+      info.className = "race-info";
+
+      const nameElement = document.createElement("p");
+      const strong = document.createElement("strong");
+
+      strong.textContent = name;
+      nameElement.appendChild(strong);
+
+      const detailsElement = document.createElement("p");
+
+      detailsElement.textContent =
+        [round, date].filter(Boolean).join(" | ");
+
+      info.append(nameElement, detailsElement);
+      container.replaceChildren(info);
+    }
+
+
+    // Get driver name
+    function getDriverName(driver) {
+
+      return driver.driver_name ||
+        driver.full_name ||
+        driver.driverId ||
+        "Unknown";
+    }
+
+
+    // Get constructor name
+    function getConstructorName(driver) {
+
+      return driver.constructor_name ||
+        driver.constructorId ||
+        "—";
+    }
+
+
+    // Display prediction table
+    function displayPredictions(elementId, predictions) {
+
+      const container = document.getElementById(elementId);
+
+      if (!predictions || predictions.length === 0) {
+        container.textContent = "No predictions available.";
+        return;
+      }
+
+      const sorted = [...predictions].sort((a, b) =>
+        Number(a.predicted_position ?? a.predicted_rank ?? 999) -
+        Number(b.predicted_position ?? b.predicted_rank ?? 999)
+      );
+
+      const table = document.createElement("table");
+      table.className = "prediction-table";
+
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Pos.</th>
+            <th>Driver</th>
+            <th>Constructor</th>
+          </tr>
+        </thead>
+      `;
+
+      const tbody = document.createElement("tbody");
+
+      sorted.forEach(driver => {
+
+        const row = document.createElement("tr");
+
+        const position = document.createElement("td");
+        position.className = "position";
+
+        position.textContent =
+          driver.predicted_position ??
+          driver.predicted_rank ??
+          "—";
+
+        const driverName = document.createElement("td");
+        driverName.textContent = getDriverName(driver);
+
+        const constructor = document.createElement("td");
+        constructor.textContent = getConstructorName(driver);
+
+        row.append(position, driverName, constructor);
+        tbody.appendChild(row);
+
+      });
+
+      table.appendChild(tbody);
+      container.replaceChildren(table);
+    }
+
+
+    // Display actual race results
+    function displayActualResults(results) {
+
+      const container = document.getElementById("actual-results");
+
+      if (!results || results.length === 0) {
+        container.textContent = "No actual results available.";
+        return;
+      }
+
+      const sorted = [...results].sort((a, b) =>
+        Number(a.positionOrder ?? a.position ?? 999) -
+        Number(b.positionOrder ?? b.position ?? 999)
+      );
+
+      const table = document.createElement("table");
+
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Pos.</th>
+            <th>Driver</th>
+            <th>Constructor</th>
+          </tr>
+        </thead>
+      `;
+
+      const tbody = document.createElement("tbody");
+
+      sorted.forEach(driver => {
+
+        const row = document.createElement("tr");
+
+        const position = document.createElement("td");
+        position.className = "position";
+
+        position.textContent =
+          driver.positionOrder ??
+          driver.position ??
+          "—";
+
+        const driverName = document.createElement("td");
+        driverName.textContent = getDriverName(driver);
+
+        const constructor = document.createElement("td");
+        constructor.textContent = getConstructorName(driver);
+
+        row.append(position, driverName, constructor);
+        tbody.appendChild(row);
+
+      });
+
+      table.appendChild(tbody);
+      container.replaceChildren(table);
+    }
+
+
+    // Load data when the page opens
+    loadF1Predictions();
+
+  </script>
+
+</body>
+</html>
